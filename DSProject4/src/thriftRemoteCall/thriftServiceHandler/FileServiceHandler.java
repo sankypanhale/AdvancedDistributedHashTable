@@ -60,15 +60,16 @@ public class FileServiceHandler implements DHTNode.Iface{
 			System.exit(0);
 		}
 		meNode.id = getSHAHash(meNode.ip+":"+port);
-		/*
+		
 		System.out.println("Big integer valued to: "+tempBig);
 		System.out.println("Ip is current machine is: "+meNode.ip+":"+port);
 		System.out.println("Current Node Hash key is: "+meNode.id);
 		//sucessor = new NodeID();
-		 */
+		 
 		mypredecessor = null;
-		mysucessor = null;
+		mysucessor = this.meNode;
 		init_fingertable();
+		System.out.println("Finger table created and initialised");
 	}
 
 
@@ -270,6 +271,11 @@ public class FileServiceHandler implements DHTNode.Iface{
 						}
 					}
 				}
+				else if(next == null)
+				{
+					nodetoreturn = pred;
+					break;
+				}
 			}
 			//if(recurse)
 			// go in only if nodeto return is not set
@@ -424,32 +430,40 @@ public class FileServiceHandler implements DHTNode.Iface{
 	@Override
 	public void stabilize() throws SystemException, TException {
 		// TODO Auto-generated method stub
-
 		TTransport transport = null;
 		TProtocol protocol = null;
 
 		NodeID predOfSucc = null;
 		boolean notifypredOfSucc = false;
 
-		//get the predecessor of successor
-		transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
-		transport.open();
-		protocol = new TBinaryProtocol(transport);
-		DHTNode.Client client = new DHTNode.Client(protocol);
-		predOfSucc = client.getNodePred();
-		transport.close();
+		//Sanket2: Check if my successor is me 
+		if(myCompare(this.meNode.getId(),this.getMysucessor().getId()) != 0)
+		{
 
+			//get the predecessor of successor
+			transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
+			transport.open();
+			protocol = new TBinaryProtocol(transport);
+			DHTNode.Client client = new DHTNode.Client(protocol);
+			predOfSucc = client.getNodePred();
+			transport.close();
+
+		}
 		//Sanket: needs to check if apache thrift framework returns null 
 		if(predOfSucc == null)
 		{
 			// then notify the successor that I am here; set me as your predecessor
 			//notify the successor that I have entered the network
-			transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
-			transport.open();
-			protocol = new TBinaryProtocol(transport);
-			DHTNode.Client client2 = new DHTNode.Client(protocol);
-			client2.notify(this.meNode);
-			transport.close();
+			//Sanket2: Check if my successor is me 
+			if(myCompare(this.meNode.getId(),this.getMysucessor().getId()) != 0)
+			{
+				transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
+				transport.open();
+				protocol = new TBinaryProtocol(transport);
+				DHTNode.Client client2 = new DHTNode.Client(protocol);
+				client2.notify(this.meNode);
+				transport.close();
+			}
 		}
 		else
 		{
@@ -570,14 +584,37 @@ public class FileServiceHandler implements DHTNode.Iface{
 	@Override
 	public void fixFingers() throws SystemException, TException {
 		// TODO Auto-generated method stub
-		
 		int randomnumber;
 		NodeID updatedEntry = null;
+		BigInteger bigtwo = new BigInteger("2");
+		BigInteger bigone = new BigInteger("1");
+		BigInteger twopowervalue = null;
+		BigInteger bignewkey = null;
+		BigInteger big256 = null;
+		BigInteger big256minusone = null;
+		String key = null;
+		//BigInteger equivalent of new node key
+		byte[] b = new BigInteger(this.meNode.getId(),16).toByteArray();
+		BigInteger tempBig2 = new BigInteger(b);
 		
 		//get the random number
 		randomnumber = getmyRandomNumberGenerator();
+		
 		// find successor of randomnumberTH finger
-		updatedEntry = findSucc(this.fingertable.get(randomnumber).getId());
+		twopowervalue = bigtwo.pow(randomnumber);
+		bignewkey = twopowervalue.add(tempBig2);
+
+		//BUG FIX: Check if the generated key is greater than (2^256-1)
+		//if yes then mod the value by 256
+		big256 = bigtwo.pow(256);
+		//(2^256 - 1)
+		big256minusone = big256.subtract(bigone);
+		if(bignewkey.compareTo(big256minusone) > 0)
+		{
+			bignewkey.mod(big256);
+		}
+		key = bignewkey.toString(16);
+		updatedEntry = findSucc(key);
 		// update it to correct entry
 		this.fingertable.set(randomnumber, updatedEntry);
 	}
@@ -592,11 +629,15 @@ public class FileServiceHandler implements DHTNode.Iface{
 	{
 		int i;
 		// Initialize the finger table and set all entries to null
+
 		fingertable = new ArrayList<NodeID>();
-		for(i=0; i<256; i++)
+		this.fingertable.add(0,this.meNode);
+
+		for(i=1; i<256; i++)
 		{
 			this.fingertable.add(i,null);
 		}
+		
 	}	
 	public BigInteger getBigIntegerEquivalent(String key)
 	{

@@ -14,7 +14,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
-import thriftRemoteCall.thriftUtil.FileStore;
+import thriftRemoteCall.thriftUtil.DHTNode;
 import thriftRemoteCall.thriftUtil.NodeID;
 import thriftRemoteCall.thriftUtil.SystemException;
 
@@ -30,16 +30,17 @@ public class Worker {
 		NodeID existingnode = null;
 		List<NodeID> fingerworker = null;
 		try {
-	
-	 	transport = new TSocket("localhost", 7072);
+			int connectoport = Integer.parseInt(args[0].trim());
+			int newport = Integer.parseInt(args[1].trim());
+	 	transport = new TSocket("localhost", newport);
 			transport.open();
 
 			protocol = new TBinaryProtocol(transport);
-			FileStore.Client client = new FileStore.Client(protocol);
+			DHTNode.Client client = new DHTNode.Client(protocol);
 
 			existingnode = new NodeID();
 			existingnode.setIp("127.0.1.1");
-			existingnode.setPort(7070);
+			existingnode.setPort(connectoport);
 			existingnode.setId(getSHAHash(existingnode.ip+":"+existingnode.port));
 			client.join(existingnode);
 		//	client.remove();
