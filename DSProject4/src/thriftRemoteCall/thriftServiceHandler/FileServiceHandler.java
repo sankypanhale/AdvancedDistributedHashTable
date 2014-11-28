@@ -410,6 +410,8 @@ public class FileServiceHandler implements DHTNode.Iface{
 		this.fingertable.set(0,nodeentrytoadd);
 		this.setMysucessor(nodeentrytoadd);
 
+		System.out.println("***Successor of "+this.meNode.port+" is set to "+nodeentrytoadd.port);
+		
 		//notify the successor that I have entered the network
 		transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
 		transport.open();
@@ -417,6 +419,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		DHTNode.Client client2 = new DHTNode.Client(protocol);
 		client2.notify(this.meNode);
 		transport.close();
+		System.out.println("***Predecesor of "+this.getMysucessor().port+" is set to "+this.meNode.port);
 	}
 
 
@@ -449,6 +452,23 @@ public class FileServiceHandler implements DHTNode.Iface{
 			transport.close();
 
 		}
+		else
+		{
+			predOfSucc = getNodePred();
+			
+			if(predOfSucc != null)
+  			{
+				System.out.println("I am Here.........>!!!!!!!!!!!!!!--getting predOfSucc as "+predOfSucc.port);
+				this.setMysucessor(predOfSucc);
+				this.fingertable.set(0, predOfSucc);
+				transport = new TSocket(predOfSucc.getIp(), predOfSucc.getPort());
+				transport.open();
+				protocol = new TBinaryProtocol(transport);
+				DHTNode.Client client2 = new DHTNode.Client(protocol);
+				client2.notify(this.meNode);
+				transport.close();
+			}
+		}
 		//Sanket: needs to check if apache thrift framework returns null 
 		if(predOfSucc == null)
 		{
@@ -464,6 +484,10 @@ public class FileServiceHandler implements DHTNode.Iface{
 				client2.notify(this.meNode);
 				transport.close();
 			}
+		/*	else
+			{
+				notify(this.meNode);
+			}*/
 		}
 		else
 		{
@@ -477,7 +501,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 					//predOfSucc = 30, meNode = 28, meNode.currentSucc = 4 
 					// then set meNode's successor to predofSucc
 					this.setMysucessor(predOfSucc);
-
+					this.fingertable.set(0, predOfSucc);
 					//and notify predOfSucc to update its predecessor
 					notifypredOfSucc = true;
 				}
@@ -488,7 +512,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 					//predOfSucc = 2, meNode = 28, meNode.currentSucc = 4
 					// then set meNode's successor to predofSucc
 					this.setMysucessor(predOfSucc);
-
+					this.fingertable.set(0, predOfSucc);
 					//and notify predOfSucc to update its predecessor
 					notifypredOfSucc = true;
 				}
@@ -500,7 +524,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//if predofSucc must be smaller than my current successor
 				if(myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0)
 				{
-					// and predofSucc must be greater than me
+					// and predofSucc must be greater than  me
 					if(myCompare(this.meNode.getId(), predOfSucc.getId()) < 0)
 					{
 						// this means that, predofSucc(n is notebook example)
@@ -524,7 +548,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 				transport.close();
 			}
 		}
-
+		System.out.println("My ("+this.meNode.port+") Successor is: "+this.mysucessor.port);
 	}
 
 
@@ -617,6 +641,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		updatedEntry = findSucc(key);
 		// update it to correct entry
 		this.fingertable.set(randomnumber, updatedEntry);
+		System.out.println("Setting "+randomnumber+" th entry of "+this.meNode.getPort()+ " to "+updatedEntry.getPort());
 	}
 
 	@Override
@@ -764,7 +789,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		max = 255;
 		Random randomobj = new Random();
 		randomnum = randomobj.nextInt(max - min + 1) + min;
-		System.out.println("Random Number generated is: "+randomnum);
+		//System.out.println("Random Number generated is: "+randomnum);
 		return randomnum;
 	}
 

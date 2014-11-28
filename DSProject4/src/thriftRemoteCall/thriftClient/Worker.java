@@ -43,6 +43,7 @@ public class Worker {
 			existingnode.setPort(connectoport);
 			existingnode.setId(getSHAHash(existingnode.ip+":"+existingnode.port));
 			client.join(existingnode);
+			System.out.println("Base Node: "+connectoport+"New Node: "+newport );
 		//	client.remove();
 
 			transport.close();

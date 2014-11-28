@@ -52,7 +52,7 @@ public class FileServer {
 
 			//Code to create multi-threaded server
 			Runnable simple = new Runnable() {
-				int maxtime = 500000;
+				int maxtime = 1500;
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
@@ -67,6 +67,16 @@ public class FileServer {
 
 						}
 						maxtime--;
+					}
+					System.out.println("printing finger table at server side");
+					try {
+						System.out.println(fileHandler.getFingertable());
+					} catch (SystemException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (TException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 				}
 			};
