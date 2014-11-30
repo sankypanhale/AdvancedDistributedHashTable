@@ -236,7 +236,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 					System.out.println("current entry port: "+pred.getPort());
 					System.out.println("next entry port: "+next.getPort());
 				}*/
-				if(pred != null && next != null)
+				if(pred.getId() != null && next.getId() != null)
 				{
 					if(myCompare(key,pred.getId()) == 0)
 					{
@@ -271,7 +271,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 						}
 					}
 				}
-				else if(next == null)
+				else if(next.getId() == null)
 				{
 					nodetoreturn = pred;
 					break;
@@ -658,9 +658,13 @@ public class FileServiceHandler implements DHTNode.Iface{
 		fingertable = new ArrayList<NodeID>();
 		this.fingertable.add(0,this.meNode);
 
+		NodeID tempNode = new NodeID();
+		tempNode.setId(null);
+		tempNode.setIp(null);
+		tempNode.setPort(-1);
 		for(i=1; i<256; i++)
 		{
-			this.fingertable.add(i,null);
+			this.fingertable.add(i,tempNode);
 		}
 		
 	}	
