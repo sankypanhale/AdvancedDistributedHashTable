@@ -16,13 +16,26 @@ import thriftRemoteCall.thriftUtil.DHTNode.Processor;
 import thriftRemoteCall.thriftUtil.SystemException;
 
 
-public class FileServer {
+public class FileServer implements Runnable{
 
-	public static FileServiceHandler fileHandler;
+//	public static FileServiceHandler fileHandler;
 	//public static FileStore.Processor<Iface> processor;
-	public static DHTNode.Processor<Iface> processor;
+//	public static DHTNode.Processor<Iface> processor;
 
-	public static void StartsimpleServer(Processor<Iface> processor,int port) {
+	public  FileServiceHandler fileHandler;
+	public  DHTNode.Processor<Iface> processor;
+
+	
+	private int port;
+	private int interval;
+	//constructor 
+	public FileServer(int inport,int ininteval)
+	{
+		port = inport;
+		//BUG FIX: milliseconds to seconds
+		interval = ininteval*1000;
+	}
+	public void StartsimpleServer(Processor<Iface> processor,int port) {
 
 		try {
 
@@ -40,27 +53,22 @@ public class FileServer {
 		}
 	}
 
-	public static void main(String[] args) {
-		final int port;
-		final int interval;
+	public void mainMethod() {
 		try{
-			port = Integer.parseInt(args[0].trim());
-			interval = Integer.parseInt(args[1].trim());
 			fileHandler = new FileServiceHandler(port);
 			processor = new DHTNode.Processor<DHTNode.Iface>(fileHandler);
-			
+
 
 			//Code to create multi-threaded server
 			Runnable simple = new Runnable() {
-				int maxtime = 1500;
+				int maxtime = 50000;
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
-					System.out.println("I am in RUN method");
 					while(maxtime > 0)
 					{    
 						// Do your task
-						simple(processor,interval);
+						simpleMethod(processor,interval);
 						try{
 							Thread.sleep(interval);
 						} catch(Exception e){
@@ -68,7 +76,7 @@ public class FileServer {
 						}
 						maxtime--;
 					}
-					System.out.println("printing finger table at server side");
+					/*System.out.println("printing finger table at server side");
 					try {
 						System.out.println(fileHandler.getFingertable());
 					} catch (SystemException e) {
@@ -77,7 +85,7 @@ public class FileServer {
 					} catch (TException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					}
+					}*/
 				}
 			};
 
@@ -94,7 +102,7 @@ public class FileServer {
 
 	}
 
-	protected static void simple(Processor<Iface> processor, int interval) {
+	protected void simpleMethod(Processor<Iface> processor, int interval) {
 		// TODO Auto-generated method stub
 		try {
 			fileHandler.stabilize();
@@ -109,6 +117,11 @@ public class FileServer {
 			System.out.println("Error occured in the thread");
 		}
 
+	}
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		mainMethod();
 	}
 
 }

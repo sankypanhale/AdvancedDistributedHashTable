@@ -59,20 +59,27 @@
         <java classname="thriftRemoteCall.thriftClient.Worker" failonerror="true" fork="yes">
         	<arg value="${arg0}"/>
         	<arg value="${arg1}"/>
-        	<classpath refid="DSProject4.classpath"/>
-        </java>
-    </target>
-    <target name="FileServer">
-        <java classname="thriftRemoteCall.thriftServer.FileServer" failonerror="true" fork="yes">
-        	<arg value="${arg0}"/>
-        	<arg value="${arg1}"/>
-        	<classpath refid="DSProject4.classpath"/>
+            <classpath refid="DSProject4.classpath"/>
         </java>
     </target>
     <target name="DisplayWorker">
         <java classname="thriftRemoteCall.thriftClient.DisplayWorker" failonerror="true" fork="yes">
         	<arg value="${arg0}"/>
-        	<classpath refid="DSProject4.classpath"/>
+            <classpath refid="DSProject4.classpath"/>
+        </java>
+    </target>
+    <target name="FileServer (1)">
+        <java classname="thriftRemoteCall.thriftServer.FileServer" failonerror="true" fork="yes">
+            <arg line="9090 1000"/>
+            <classpath refid="DSProject4.classpath"/>
+        </java>
+    </target>
+    <target name="Test">
+        <java classname="thriftRemoteCall.thriftClient.Test" failonerror="true" fork="yes">
+        	<arg value="${arg0}"/>
+        	<arg value="${arg1}"/>
+        	<arg value="${arg2}"/>
+            <classpath refid="DSProject4.classpath"/>
         </java>
     </target>
 </project>

@@ -60,12 +60,12 @@ public class FileServiceHandler implements DHTNode.Iface{
 			System.exit(0);
 		}
 		meNode.id = getSHAHash(meNode.ip+":"+port);
-		
+
 		System.out.println("Big integer valued to: "+tempBig);
 		System.out.println("Ip is current machine is: "+meNode.ip+":"+port);
 		System.out.println("Current Node Hash key is: "+meNode.id);
 		//sucessor = new NodeID();
-		 
+
 		mypredecessor = null;
 		mysucessor = this.meNode;
 		init_fingertable();
@@ -398,7 +398,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 
 		NodeID nodeentrytoadd = null;
 		//set predecessor to null
-		this.setMypredecessor(null);
+		//this.setMypredecessor(null);
 
 		//set successor variable and first fingertable entry
 		transport = new TSocket(nodeId.getIp(), nodeId.getPort());
@@ -411,7 +411,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		this.setMysucessor(nodeentrytoadd);
 
 		System.out.println("***Successor of "+this.meNode.port+" is set to "+nodeentrytoadd.port);
-		
+
 		//notify the successor that I have entered the network
 		transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
 		transport.open();
@@ -426,6 +426,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 	@Override
 	public NodeID getNodePred() throws SystemException, TException {
 		// TODO Auto-generated method stub
+		//System.out.println("Yoo port: "+this.meNode.port+ "pred is"+this.getMypredecessor());
 		return this.getMypredecessor();
 	}
 
@@ -437,7 +438,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		TProtocol protocol = null;
 
 		NodeID predOfSucc = null;
-		boolean notifypredOfSucc = false;
+		boolean remotenotifypredOfSucc = true;
 
 		//Sanket2: Check if my successor is me 
 		if(myCompare(this.meNode.getId(),this.getMysucessor().getId()) != 0)
@@ -454,19 +455,17 @@ public class FileServiceHandler implements DHTNode.Iface{
 		}
 		else
 		{
-			predOfSucc = getNodePred();
-			
-			if(predOfSucc != null)
-  			{
-				System.out.println("I am Here.........>!!!!!!!!!!!!!!--getting predOfSucc as "+predOfSucc.port);
-				this.setMysucessor(predOfSucc);
-				this.fingertable.set(0, predOfSucc);
-				transport = new TSocket(predOfSucc.getIp(), predOfSucc.getPort());
-				transport.open();
-				protocol = new TBinaryProtocol(transport);
-				DHTNode.Client client2 = new DHTNode.Client(protocol);
-				client2.notify(this.meNode);
-				transport.close();
+			remotenotifypredOfSucc = false;
+			if(this.getMypredecessor() == null)
+			{
+				//when nodes running without joining each other
+				//to avoid NULL pointer when predecessor is not set
+				notify(this.meNode);
+				System.out.println("^^^^***Predecesor of "+this.meNode.port+" is set to "+this.meNode.port);
+			}
+			else
+			{
+				predOfSucc = getNodePred();
 			}
 		}
 		//Sanket: needs to check if apache thrift framework returns null 
@@ -484,60 +483,35 @@ public class FileServiceHandler implements DHTNode.Iface{
 				client2.notify(this.meNode);
 				transport.close();
 			}
-		/*	else
+			/*	else
 			{
 				notify(this.meNode);
 			}*/
 		}
 		else
 		{
-			//special condition when my successor is smaller than me
-			if(myCompare(this.meNode.getId(),this.getMysucessor().getId()) > 0)
+			// predOfSucc must be greater than meNode and meNodeSucc OR..
+			if(myCompare(this.meNode.getId(), predOfSucc.getId()) < 0 && 
+					myCompare(this.getMysucessor().getId(), predOfSucc.getId()) < 0)
 			{
-				// predOfSucc must be greater than meNode and meNodeSucc OR..
-				if(myCompare(this.meNode.getId(), predOfSucc.getId()) < 0 && 
-						myCompare(this.getMysucessor().getId(), predOfSucc.getId()) < 0)
-				{
-					//predOfSucc = 30, meNode = 28, meNode.currentSucc = 4 
-					// then set meNode's successor to predofSucc
-					this.setMysucessor(predOfSucc);
-					this.fingertable.set(0, predOfSucc);
-					//and notify predOfSucc to update its predecessor
-					notifypredOfSucc = true;
-				}
-				else if((myCompare(this.meNode.getId(), predOfSucc.getId()) > 0 && 
-						myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0))
-				{
-					//.. OR the predOfSucc must be smaller than meNode and meNodeSucc
-					//predOfSucc = 2, meNode = 28, meNode.currentSucc = 4
-					// then set meNode's successor to predofSucc
-					this.setMysucessor(predOfSucc);
-					this.fingertable.set(0, predOfSucc);
-					//and notify predOfSucc to update its predecessor
-					notifypredOfSucc = true;
-				}
+				this.setMysucessor(predOfSucc);
+				this.fingertable.set(0, predOfSucc);
 			}
-			else
+			else if((myCompare(this.meNode.getId(), predOfSucc.getId()) > 0 && 
+					myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0))
 			{
-				//here my successor is greater than me (normal case)
-
-				//if predofSucc must be smaller than my current successor
-				if(myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0)
-				{
-					// and predofSucc must be greater than  me
-					if(myCompare(this.meNode.getId(), predOfSucc.getId()) < 0)
-					{
-						// this means that, predofSucc(n is notebook example)
-						//belongs to meNode(Np) and meNode's successor(Ns)
-						// then set meNode's successor to predofSucc
-						this.setMysucessor(predOfSucc);
-
-						//and notify predOfSucc to update its predecessor
-						notifypredOfSucc = true;
-					}
-				}
+				//OR the predOfSucc must be smaller than meNode and meNodeSucc
+				this.setMysucessor(predOfSucc);
+				this.fingertable.set(0, predOfSucc);
 			}
-			if(notifypredOfSucc)
+			else if(myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0 &&
+					myCompare(this.meNode.getId(), predOfSucc.getId()) < 0)
+			{
+				//normal case
+				this.setMysucessor(predOfSucc);
+				this.fingertable.set(0, predOfSucc);
+			}
+			if(remotenotifypredOfSucc)
 			{
 				// notify predOfSucc to update its predecessor
 				transport = new TSocket(predOfSucc.getIp(), predOfSucc.getPort());
@@ -547,60 +521,51 @@ public class FileServiceHandler implements DHTNode.Iface{
 				client2.notify(this.meNode);
 				transport.close();
 			}
+			////////////////////////////////////
 		}
-		System.out.println("My ("+this.meNode.port+") Successor is: "+this.mysucessor.port);
+		//System.out.println("My ("+this.meNode.port+") Successor is: "+this.mysucessor.port);
 	}
 
 
 	@Override
 	public void notify(NodeID nodeId) throws SystemException, TException {
 		// TODO Auto-generated method stub
-
 		// if my predecessor is null then set nodeID as my predecessor 
 		if(this.getMypredecessor() == null)
 		{
 			this.setMypredecessor(nodeId);
+			System.out.println("Setting pred of "+this.meNode.port+ " to "+nodeId.port);
 		}
-		else
+		else if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) < 0 && 
+				myCompare(this.getMeNode().getId(), nodeId.getId()) > 0)
 		{
-			// i need to check if nodeID falls between me and my current predecessor
-
-			//special condition when my predecessor is greater than me
-			if(myCompare(this.meNode.getId(),this.getMypredecessor().getId()) < 0)
-			{
-				//check that nodeID must be greater than the current predecessor and menode
-				if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) < 0 && 
-						myCompare(this.getMeNode().getId(), nodeId.getId()) < 0)
-				{
-					//condition if 30 joins to network in between 28 and 4
-					this.setMypredecessor(nodeId);
-				}
-				else if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) > 0 && 
-						myCompare(this.getMeNode().getId(), nodeId.getId()) > 0)
-				{
-					//check that nodeID must be smaller than the current predecessor and menode
-					//condition if 1 joins to network in between 28 and 4
-					this.setMypredecessor(nodeId);
-				}
-			}
-			else
-			{
-				//my predecessor is smaller than me (normal case)
-
-				//check that nodeID must be greater than the current predecessor
-				if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) < 0)
-				{
-					// and nodeID must be smaller than current node
-					if(myCompare(this.getMeNode().getId(), nodeId.getId()) > 0)
-					{
-						// if this conditions are satisfied then it means that
-						// newly joined node(nodeID) is in between this node 
-						// and it's this node's current predecessor
-						// hence update this node's predecessor
-						this.setMypredecessor(nodeId);
-					}
-				}
-			}
+			// and nodeID must be smaller than current node
+			// if this conditions are satisfied then it means that
+			// newly joined node(nodeID) is in between this node 
+			// and it's this node's current predecessor
+			// hence update this node's predecessor
+			this.setMypredecessor(nodeId);
+			System.out.println("Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+		}
+		else if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) < 0 && 
+				myCompare(this.getMeNode().getId(), nodeId.getId()) < 0)
+		{
+			// greater than both
+			this.setMypredecessor(nodeId);
+			System.out.println("Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+		}
+		else if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) > 0 && 
+				myCompare(this.getMeNode().getId(), nodeId.getId()) > 0)
+		{
+			//smaller than both
+			this.setMypredecessor(nodeId);
+			System.out.println("Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+		}
+		else if(myCompare(this.meNode.getId(),this.getMypredecessor().getId()) == 0)
+		{
+			//me node and my predecessor is same
+			this.setMypredecessor(nodeId);
+			System.out.println("Setting pred of "+this.meNode.port+ " to "+nodeId.port);
 		}
 	}
 
@@ -620,10 +585,10 @@ public class FileServiceHandler implements DHTNode.Iface{
 		//BigInteger equivalent of new node key
 		byte[] b = new BigInteger(this.meNode.getId(),16).toByteArray();
 		BigInteger tempBig2 = new BigInteger(b);
-		
+
 		//get the random number
 		randomnumber = getmyRandomNumberGenerator();
-		
+
 		// find successor of randomnumberTH finger
 		twopowervalue = bigtwo.pow(randomnumber);
 		bignewkey = twopowervalue.add(tempBig2);
@@ -635,7 +600,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		big256minusone = big256.subtract(bigone);
 		if(bignewkey.compareTo(big256minusone) > 0)
 		{
-			bignewkey.mod(big256);
+			bignewkey = bignewkey.mod(big256);
 		}
 		key = bignewkey.toString(16);
 		updatedEntry = findSucc(key);
@@ -666,7 +631,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		{
 			this.fingertable.add(i,tempNode);
 		}
-		
+
 	}	
 	public BigInteger getBigIntegerEquivalent(String key)
 	{
@@ -721,6 +686,10 @@ public class FileServiceHandler implements DHTNode.Iface{
 		thisbig = getBigIntegerEquivalent(thiskey);
 		comparewithbig = getBigIntegerEquivalent(comparewithkey);
 
+		return thisbig.compareTo(comparewithbig);
+		
+		/*
+		
 		if(thiskey.length()!=comparewithkey.length())
 		{
 			thisbig = getBigIntegerEquivalent(thiskey);
@@ -742,7 +711,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 			if(thisbig.mod(maxvalue).compareTo(comparewithbig) < 0)
 			{
 				returnvalue = 1;
-			}*/
+			}
 			if(subvalue.signum() > 0)
 			{
 				returnvalue = -1;
@@ -761,7 +730,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 			returnvalue = thiskey.compareToIgnoreCase(comparewithkey);
 		}
 
-		return returnvalue;
+		return returnvalue;*/
 	}
 
 
