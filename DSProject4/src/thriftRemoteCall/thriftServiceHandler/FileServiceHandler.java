@@ -61,15 +61,15 @@ public class FileServiceHandler implements DHTNode.Iface{
 		}
 		meNode.id = getSHAHash(meNode.ip+":"+port);
 
-		System.out.println("Big integer valued to: "+tempBig);
+		/*System.out.println("Big integer valued to: "+tempBig);
 		System.out.println("Ip is current machine is: "+meNode.ip+":"+port);
 		System.out.println("Current Node Hash key is: "+meNode.id);
-		//sucessor = new NodeID();
+		//sucessor = new NodeID();*/
 
 		mypredecessor = null;
 		mysucessor = this.meNode;
 		init_fingertable();
-		System.out.println("Finger table created and initialised");
+		//System.out.println("Finger table created and initialised");
 	}
 
 
@@ -112,7 +112,13 @@ public class FileServiceHandler implements DHTNode.Iface{
 			}
 			// removed else: if no above condition then just go for it
 
-			nodetoconnect = findPred(key);
+			//nodetoconnect = findPred(key);
+			//Ram comment above line and then use below line
+			NodeID tempconnect;
+			tempconnect = findPred(key);
+			nodetoconnect = tempconnect.deepCopy();
+			
+			//System.out.println("........Node count is: "+nodetoconnect.count+ "of "+nodetoconnect.port);
 			//System.out.println("I have found predesor : "+ nodetoconnect);
 
 			if(nodetoconnect.getId().equalsIgnoreCase(meNode.getId()))
@@ -120,7 +126,13 @@ public class FileServiceHandler implements DHTNode.Iface{
 				// if the sucessor is same node
 				//no need to go for RPC
 				//call local method
-				return this.getNodeSucc();
+				//return this.getNodeSucc();
+
+				//Ram : above single line commented
+				NodeID tempNode = this.getNodeSucc();
+				NodeID tempNode2 = tempNode.deepCopy();
+				tempNode2.setCount(nodetoconnect.count);
+				return tempNode2;
 			}
 
 			//Sanket: new condition to handle equal to case in finger table
@@ -141,7 +153,14 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//System.out.println("Calling sucessor of : "+nodetoconnect);
 				nodetoreturn = client.getNodeSucc();
 				transport.close();
-				return nodetoreturn;
+				//return nodetoreturn;
+
+				//Ram : above single line commented
+				NodeID tempNode = nodetoreturn;
+				NodeID tempNode2 = tempNode.deepCopy();
+				tempNode2.setCount(nodetoconnect.count);
+				//tempNode.count++;
+				return tempNode2;
 			}
 			else
 			{
@@ -186,14 +205,23 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//no need to go further in the findSucc loop
 				//System.out.println("Special Case achived..!");
 				// return current node
-				return meNode;
+				//return meNode;
+
+				//Ram: commented above line
+				NodeID tempNode = meNode.deepCopy();
+				tempNode.setCount(tempNode.count+1);
+				return tempNode;
 			}
 		}
 
 		//Sanket: duplicate logic
 		if(myCompare(key,fingertable.get(0).getId()) == 0)
 		{
-			return meNode;
+			//return meNode;
+			//Ram: commented above line
+			NodeID tempNode = meNode.deepCopy();
+			tempNode.setCount(tempNode.count+1);
+			return tempNode;
 		}
 
 
@@ -220,7 +248,11 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//means that first entry will be successor of the key
 				//i.e current node must be predecesssor
 				//System.out.println("I am in new base case 2");
-				return meNode;
+				//return meNode;
+				//Ram: commented above line
+				NodeID tempNode = meNode.deepCopy();
+				tempNode.setCount(tempNode.count+1);
+				return tempNode;
 			}
 		}
 		try
@@ -332,7 +364,11 @@ public class FileServiceHandler implements DHTNode.Iface{
 				catch (TException x) {
 					x.printStackTrace();
 				} 
-				return nodetoreturn;
+				//return nodetoreturn;
+				//Ram: commented above line
+				NodeID tempNode = nodetoreturn.deepCopy();
+				tempNode.setCount(tempNode.count+1);
+				return tempNode;
 			}
 			else
 			{
@@ -343,9 +379,14 @@ public class FileServiceHandler implements DHTNode.Iface{
 			}
 		}
 		else
-			return nodetoreturn;
+		{
+			//return nodetoreturn;
+			//Ram: commented above line
+			NodeID tempNode = nodetoreturn.deepCopy();
+			tempNode.setCount(tempNode.count+1);
+			return tempNode;
+		}
 	}
-
 
 
 	@Override
@@ -411,7 +452,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		this.fingertable.set(0,nodeentrytoadd);
 		this.setMysucessor(nodeentrytoadd);
 
-		System.out.println("***Successor of "+this.meNode.port+" is set to "+nodeentrytoadd.port);
+		//System.out.println("***Successor of "+this.meNode.port+" is set to "+nodeentrytoadd.port);
 
 		//notify the successor that I have entered the network
 		transport = new TSocket(this.getMysucessor().getIp(), this.getMysucessor().getPort());
@@ -420,7 +461,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		DHTNode.Client client2 = new DHTNode.Client(protocol);
 		client2.notify(this.meNode);
 		transport.close();
-		System.out.println("***Predecesor of "+this.getMysucessor().port+" is set to "+this.meNode.port);
+		//System.out.println("***Predecesor of "+this.getMysucessor().port+" is set to "+this.meNode.port);
 	}
 
 
@@ -467,7 +508,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 			else
 			{
 				predOfSucc = getNodePred();
-				System.out.println("I m getting predf su here..!");
+				//System.out.println("I m getting predf su here..!");
 			}
 		}
 		//Sanket: needs to check if apache thrift framework returns null 
@@ -498,7 +539,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 			{
 				this.setMysucessor(predOfSucc);
 				this.fingertable.set(0, predOfSucc);
-				System.out.println("1Updating ("+this.meNode.port+") Successor to: "+predOfSucc);
+				//System.out.println("1Updating ("+this.meNode.port+") Successor to: "+predOfSucc);
 			}
 			else if((myCompare(this.meNode.getId(), predOfSucc.getId()) > 0 && 
 					myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0))
@@ -506,7 +547,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//OR the predOfSucc must be smaller than meNode and meNodeSucc
 				this.setMysucessor(predOfSucc);
 				this.fingertable.set(0, predOfSucc);
-				System.out.println("2Updating ("+this.meNode.port+") Successor to: "+predOfSucc);
+				//System.out.println("2Updating ("+this.meNode.port+") Successor to: "+predOfSucc);
 			}
 			else if(myCompare(this.getMysucessor().getId(), predOfSucc.getId()) > 0 &&
 					myCompare(this.meNode.getId(), predOfSucc.getId()) < 0)
@@ -514,7 +555,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//normal case
 				this.setMysucessor(predOfSucc);
 				this.fingertable.set(0, predOfSucc);
-				System.out.println("3Updating ("+this.meNode.port+") Successor to: "+predOfSucc);
+				//System.out.println("3Updating ("+this.meNode.port+") Successor to: "+predOfSucc);
 			}
 			if(remotenotifypredOfSucc)
 			{
@@ -528,7 +569,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 			}
 			////////////////////////////////////
 		}
-		System.out.println("My ("+this.meNode.port+") Successor is: "+this.mysucessor.port);
+		//System.out.println("My ("+this.meNode.port+") Successor is: "+this.mysucessor.port);
 	}
 
 
@@ -586,7 +627,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 		{
 			this.setMypredecessor(nodeId);
 			NodeID temp = new NodeID();
-			System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+			//System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
 		}
 		//special condition when my predecessor is greater than me
 		if(myCompare(this.meNode.getId(),this.getMypredecessor().getId()) <= 0)
@@ -597,7 +638,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 			{
 				//condition if 30 joins to network in between 28 and 4
 				this.setMypredecessor(nodeId);
-				System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+				//System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
 			}
 			else if(myCompare(this.getMypredecessor().getId(), nodeId.getId()) > 0 &&
 					myCompare(this.getMeNode().getId(), nodeId.getId()) > 0)
@@ -605,7 +646,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 				//check that nodeID must be smaller than the current predecessor and menode
 				//condition if 1 joins to network in between 28 and 4
 				this.setMypredecessor(nodeId);
-				System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+				//System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
 			}
 		}
 		else
@@ -622,7 +663,7 @@ public class FileServiceHandler implements DHTNode.Iface{
 					// and it's this node's current predecessor
 					// hence update this node's predecessor
 					this.setMypredecessor(nodeId);
-					System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
+					//System.out.println("--->Setting pred of "+this.meNode.port+ " to "+nodeId.port);
 				}
 			}
 		}
@@ -630,125 +671,125 @@ public class FileServiceHandler implements DHTNode.Iface{
 
 
 
-		@Override
-		public void fixFingers() throws SystemException, TException {
-			// TODO Auto-generated method stub
-			int randomnumber;
-			NodeID updatedEntry = null;
-			BigInteger bigtwo = new BigInteger("2");
-			BigInteger bigone = new BigInteger("1");
-			BigInteger twopowervalue = null;
-			BigInteger bignewkey = null;
-			BigInteger big256 = null;
-			BigInteger big256minusone = null;
-			String key = null;
-			//BigInteger equivalent of new node key
-			byte[] b = new BigInteger(this.meNode.getId(),16).toByteArray();
-			BigInteger tempBig2 = new BigInteger(b);
+	@Override
+	public void fixFingers() throws SystemException, TException {
+		// TODO Auto-generated method stub
+		int randomnumber;
+		NodeID updatedEntry = null;
+		BigInteger bigtwo = new BigInteger("2");
+		BigInteger bigone = new BigInteger("1");
+		BigInteger twopowervalue = null;
+		BigInteger bignewkey = null;
+		BigInteger big256 = null;
+		BigInteger big256minusone = null;
+		String key = null;
+		//BigInteger equivalent of new node key
+		byte[] b = new BigInteger(this.meNode.getId(),16).toByteArray();
+		BigInteger tempBig2 = new BigInteger(b);
 
-			//get the random number
-			randomnumber = getmyRandomNumberGenerator();
+		//get the random number
+		randomnumber = getmyRandomNumberGenerator();
 
-			// find successor of randomnumberTH finger
-			twopowervalue = bigtwo.pow(randomnumber);
-			bignewkey = twopowervalue.add(tempBig2);
+		// find successor of randomnumberTH finger
+		twopowervalue = bigtwo.pow(randomnumber);
+		bignewkey = twopowervalue.add(tempBig2);
 
-			//BUG FIX: Check if the generated key is greater than (2^256-1)
-			//if yes then mod the value by 256
-			big256 = bigtwo.pow(256);
-			//(2^256 - 1)
-			big256minusone = big256.subtract(bigone);
-			if(bignewkey.compareTo(big256minusone) > 0)
-			{
-				bignewkey = bignewkey.mod(big256);
-			}
-			key = bignewkey.toString(16);
-			updatedEntry = findSucc(key);
-			// update it to correct entry
-			this.fingertable.set(randomnumber, updatedEntry);
-			//System.out.println("Setting "+randomnumber+" th entry of "+this.meNode.getPort()+ " to "+updatedEntry.getPort());
+		//BUG FIX: Check if the generated key is greater than (2^256-1)
+		//if yes then mod the value by 256
+		big256 = bigtwo.pow(256);
+		//(2^256 - 1)
+		big256minusone = big256.subtract(bigone);
+		if(bignewkey.compareTo(big256minusone) > 0)
+		{
+			bignewkey = bignewkey.mod(big256);
+		}
+		key = bignewkey.toString(16);
+		updatedEntry = findSucc(key);
+		// update it to correct entry
+		this.fingertable.set(randomnumber, updatedEntry);
+		//System.out.println("Setting "+randomnumber+" th entry of "+this.meNode.getPort()+ " to "+updatedEntry.getPort());
+	}
+
+	@Override
+	public List<NodeID> getFingertable() throws SystemException, TException {
+		// TODO Auto-generated method stub
+		return this.fingertable;
+	}
+
+	public void init_fingertable()
+	{
+		int i;
+		// Initialize the finger table and set all entries to null
+
+		fingertable = new ArrayList<NodeID>();
+		this.fingertable.add(0,this.meNode);
+
+		NodeID tempNode = new NodeID();
+		tempNode.setId(null);
+		tempNode.setIp(null);
+		tempNode.setPort(-1);
+		for(i=1; i<256; i++)
+		{
+			this.fingertable.add(i,tempNode);
 		}
 
-		@Override
-		public List<NodeID> getFingertable() throws SystemException, TException {
-			// TODO Auto-generated method stub
-			return this.fingertable;
-		}
-
-		public void init_fingertable()
-		{
-			int i;
-			// Initialize the finger table and set all entries to null
-
-			fingertable = new ArrayList<NodeID>();
-			this.fingertable.add(0,this.meNode);
-
-			NodeID tempNode = new NodeID();
-			tempNode.setId(null);
-			tempNode.setIp(null);
-			tempNode.setPort(-1);
-			for(i=1; i<256; i++)
-			{
-				this.fingertable.add(i,tempNode);
-			}
-
-		}	
-		public BigInteger getBigIntegerEquivalent(String key)
-		{
-			byte[] b = new BigInteger(key,16).toByteArray();
-			BigInteger tempBig2 = new BigInteger(b);
-			//System.out.println("Biginterger for newly joining node is:"+ tempBig2);
-			return tempBig2;
-		}
-		public String getHexStringEquuivalent(BigInteger b)
-		{
-			String key;
-			key = b.toString(16);
-			return key;
-		}
-		public static String getSHAHash(String ip,String port)
-		{
-			String tobehashed = null;
-			tobehashed = ip+":"+port;
-			StringBuffer sbuff = null;
+	}	
+	public BigInteger getBigIntegerEquivalent(String key)
+	{
+		byte[] b = new BigInteger(key,16).toByteArray();
+		BigInteger tempBig2 = new BigInteger(b);
+		//System.out.println("Biginterger for newly joining node is:"+ tempBig2);
+		return tempBig2;
+	}
+	public String getHexStringEquuivalent(BigInteger b)
+	{
+		String key;
+		key = b.toString(16);
+		return key;
+	}
+	public static String getSHAHash(String ip,String port)
+	{
+		String tobehashed = null;
+		tobehashed = ip+":"+port;
+		StringBuffer sbuff = null;
+		sbuff = new StringBuffer();
+		SystemException excep = null;
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			md.update(tobehashed.getBytes());
+			byte[] digest = md.digest();
 			sbuff = new StringBuffer();
-			SystemException excep = null;
-			try {
-				MessageDigest md = MessageDigest.getInstance("SHA-256");
-				md.update(tobehashed.getBytes());
-				byte[] digest = md.digest();
-				sbuff = new StringBuffer();
-				for (byte b : digest) {
-					sbuff.append(String.format("%02x", b & 0xff));
-				}
-			} catch (NoSuchAlgorithmException e) {
-				excep = new SystemException();
-				excep.setMessage("Error while generating SHA-256 Hash Code for new node.");	
+			for (byte b : digest) {
+				sbuff.append(String.format("%02x", b & 0xff));
 			}
-			return sbuff.toString();
+		} catch (NoSuchAlgorithmException e) {
+			excep = new SystemException();
+			excep.setMessage("Error while generating SHA-256 Hash Code for new node.");	
 		}
-		public int myCompare(String thiskey,String comparewithkey){
+		return sbuff.toString();
+	}
+	public int myCompare(String thiskey,String comparewithkey){
 
-			BigInteger thisbig = null;
-			BigInteger comparewithbig = null;
-			BigInteger subvalue = null;
+		BigInteger thisbig = null;
+		BigInteger comparewithbig = null;
+		BigInteger subvalue = null;
 
-			BigInteger maxvalue = null;
-			BigInteger bigtwo = new BigInteger("2");
-			BigInteger thismodvalue = null;
-			maxvalue = bigtwo.pow(256);
-			int returnvalue;
-			/*if(thiskey.length() > 64)
+		BigInteger maxvalue = null;
+		BigInteger bigtwo = new BigInteger("2");
+		BigInteger thismodvalue = null;
+		maxvalue = bigtwo.pow(256);
+		int returnvalue;
+		/*if(thiskey.length() > 64)
 			System.out.println("thiskey is greater than 64");
 		if(comparewithkey.length() > 64)
 			System.out.println("compare with greater than 64");*/
 
-			thisbig = getBigIntegerEquivalent(thiskey);
-			comparewithbig = getBigIntegerEquivalent(comparewithkey);
+		thisbig = getBigIntegerEquivalent(thiskey);
+		comparewithbig = getBigIntegerEquivalent(comparewithkey);
 
-			return thisbig.compareTo(comparewithbig);
+		return thisbig.compareTo(comparewithbig);
 
-			/*
+		/*
 
 		if(thiskey.length()!=comparewithkey.length())
 		{
@@ -791,40 +832,40 @@ public class FileServiceHandler implements DHTNode.Iface{
 		}
 
 		return returnvalue;*/
-		}
-
-
-
-		public NodeID getMeNode() {
-			return meNode;
-		}
-		public void setMeNode(NodeID meNode) {
-			this.meNode = meNode;
-		}
-		public NodeID getMysucessor() {
-			return mysucessor;
-		}
-		public void setMysucessor(NodeID mysucessor) {
-			this.mysucessor = mysucessor;
-		}
-		public NodeID getMypredecessor() {
-			return mypredecessor;
-		}
-		public void setMypredecessor(NodeID mypredecessor) {
-			this.mypredecessor = mypredecessor;
-		}
-
-
-		public int getmyRandomNumberGenerator()
-		{
-			int randomnum,min,max;
-			min = 1;
-			max = 255;
-			Random randomobj = new Random();
-			randomnum = randomobj.nextInt(max - min + 1) + min;
-			//System.out.println("Random Number generated is: "+randomnum);
-			return randomnum;
-		}
-
-
 	}
+
+
+
+	public NodeID getMeNode() {
+		return meNode;
+	}
+	public void setMeNode(NodeID meNode) {
+		this.meNode = meNode;
+	}
+	public NodeID getMysucessor() {
+		return mysucessor;
+	}
+	public void setMysucessor(NodeID mysucessor) {
+		this.mysucessor = mysucessor;
+	}
+	public NodeID getMypredecessor() {
+		return mypredecessor;
+	}
+	public void setMypredecessor(NodeID mypredecessor) {
+		this.mypredecessor = mypredecessor;
+	}
+
+
+	public int getmyRandomNumberGenerator()
+	{
+		int randomnum,min,max;
+		min = 1;
+		max = 255;
+		Random randomobj = new Random();
+		randomnum = randomobj.nextInt(max - min + 1) + min;
+		//System.out.println("Random Number generated is: "+randomnum);
+		return randomnum;
+	}
+
+
+}

@@ -68,9 +68,10 @@
             <classpath refid="DSProject4.classpath"/>
         </java>
     </target>
-    <target name="FileServer (1)">
+    <target name="FileServer">
         <java classname="thriftRemoteCall.thriftServer.FileServer" failonerror="true" fork="yes">
-            <arg line="9090 1000"/>
+        	<arg value="${arg0}"/>
+        	<arg value="${arg1}"/>
             <classpath refid="DSProject4.classpath"/>
         </java>
     </target>

@@ -18,14 +18,14 @@ import thriftRemoteCall.thriftUtil.SystemException;
 
 public class FileServer implements Runnable{
 
-//	public static FileServiceHandler fileHandler;
+	//	public static FileServiceHandler fileHandler;
 	//public static FileStore.Processor<Iface> processor;
-//	public static DHTNode.Processor<Iface> processor;
+	//	public static DHTNode.Processor<Iface> processor;
 
 	public  FileServiceHandler fileHandler;
 	public  DHTNode.Processor<Iface> processor;
 
-	
+
 	private int port;
 	private int interval;
 	//constructor 
@@ -52,7 +52,32 @@ public class FileServer implements Runnable{
 			System.exit(0);
 		}
 	}
+	public static void main(String[] args) 
+	{
+		int inport,ininteval;
+		try{
+			if(args.length != 2)
+			{
+				System.out.println("Usage: ./server <portNo> <interval>");
+				System.exit(0);
+			}
+			inport = Integer.parseInt(args[0].trim());
+			ininteval = Integer.parseInt(args[1].trim());
+			FileServer fserver = new FileServer(inport, ininteval);
+			fserver.mainMethod();
+		}
+		catch(NumberFormatException e)
+		{
+			System.out.println("Usage: ./server <portNo> <interval>");
+			System.out.println("Port Number must be integer..!");
+			System.out.println("Interval must be integer..!");
+			System.exit(0);
+		}catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println("Usage: ./server <portNo> <interval>");
+			System.exit(0);
+		}
 
+	}
 	public void mainMethod() {
 		try{
 			fileHandler = new FileServiceHandler(port);
@@ -76,16 +101,6 @@ public class FileServer implements Runnable{
 						}
 						maxtime--;
 					}
-					/*System.out.println("printing finger table at server side");
-					try {
-						System.out.println(fileHandler.getFingertable());
-					} catch (SystemException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (TException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}*/
 				}
 			};
 

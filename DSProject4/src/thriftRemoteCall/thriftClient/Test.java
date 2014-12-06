@@ -8,6 +8,7 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,11 @@ public class Test implements Runnable {
 		NodeID keySuccFromRemote = null;
 		CompareValues keysuccvalues = null;
 		try{
+			if(args.length != 3)
+			{
+				System.out.println("Usage: ./test <portNo> <interval> <no. of Nodes");
+				System.exit(0);
+			}
 			//parse all the input parameters
 			port = Integer.parseInt(args[0].trim());
 			interval= Integer.parseInt(args[1].trim());
@@ -83,8 +89,7 @@ public class Test implements Runnable {
 			pythonfingermap = runPythonCode(pythonfingermap);
 			pythonsucessor = setPythonSucessor(pythonfingermap,pythonsucessor);
 			pythonpred = setPythonPred(pythonsucessor,pythonpred);
-			//System.out.println("SUcc "+ pythonsucessor);
-			//System.out.println("Pred "+ pythonpred);
+			
 
 			//spawn all the results
 			for (int i = 0; i < totalNumofNodes; i++) {
@@ -99,16 +104,15 @@ public class Test implements Runnable {
 				Thread mythread = new Thread(serverrun);
 				mythread.start();
 			}
-
-			//System.out.println("_------------>printing NODE ZERO: "+listofnodes);
 			//join the nodes
 			//sleep for a while to let the server start
-			System.out.println("Let all the server start before starting the join operation..!!");
+			//System.out.println("Let all the server start before starting the join operation..!!");
 			Thread.sleep(1500);
 			for (int k = 0; k < listofnodes.size(); k++) 
 			{
 				if(listofnodes.get(k).getPort() != rootNode.getPort())
 				{
+					System.out.println(new Date());
 					System.out.println("Joining "+listofnodes.get(k).getPort()+" to "+rootNode.port);
 					transport = new TSocket(listofnodes.get(k).getIp(), listofnodes.get(k).getPort());
 					transport.open();
@@ -119,7 +123,7 @@ public class Test implements Runnable {
 					//Thread.sleep(100);
 				}
 			}
-			try {
+			/*try {
 				Process p = Runtime.getRuntime().exec("./displayworker 9090");
 				Process p1 = Runtime.getRuntime().exec("./displayworker 9091");
 				Process p2 = Runtime.getRuntime().exec("./displayworker 9092");
@@ -128,16 +132,17 @@ public class Test implements Runnable {
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 			int maxtime = 500000;
 			while(maxtime > 0)
 			{
-				Thread.sleep(50);
+				Thread.sleep(500);
 				CompareValues iterationFinger = new CompareValues();
 				CompareValues iterationSuccesor = new CompareValues();
 				CompareValues iterationPredecessor = new CompareValues();
 				
 				CompareValues iterationKeySucc = new CompareValues();
+				int iterationFindPred = 0;
 				
 				for (int j = 0; j < listofnodes.size(); j++) {
 					//Thread.sleep(800);
@@ -154,6 +159,8 @@ public class Test implements Runnable {
 					//code for bonus /*
 					mykey = getSHAHash(listofnodes.get(j).getIp(), Integer.toString(listofnodes.get(j).getPort()));
 					keySuccFromRemote = client2.findSucc(mykey);
+					iterationFindPred = iterationFindPred + keySuccFromRemote.getCount();
+					//System.out.println("Yoo Mama: Pred Count is: "+keySuccFromRemote.count);
 					//code for bonus ends  */
 					
 					transport.close();
@@ -172,36 +179,57 @@ public class Test implements Runnable {
 					iterationSuccesor = myadd(iterationSuccesor,succvalues);
 					iterationPredecessor = myadd(iterationPredecessor,predvalues);
 				}
-				System.out.println("Fingertable [Correct]= "+ iterationFinger.correct + "[Incorrect]= "+iterationFinger.incorrect);
-				System.out.println("Sucessor [Correct]= "+ iterationSuccesor.correct + "[Incorrect]= "+iterationSuccesor.incorrect);
-				System.out.println("Predecessor [Correct]= "+ iterationPredecessor.correct + "[Incorrect]= "+iterationPredecessor.incorrect);
-				System.out.println("Key Sucessor [Correct]= "+ iterationKeySucc.correct + "[Incorrect]= "+iterationKeySucc.incorrect);
+				
+				
+				System.out.println(new Date() +" Predecessor [Correct]= "+ iterationPredecessor.correct);
+				System.out.println(new Date() +" Successor [Correct]= "+ iterationSuccesor.correct);
+				System.out.println(new Date() +" Fingertable [Correct]= "+ iterationFinger.correct);
+				System.out.println(new Date() +" Fingertable [Incorrect]= "+iterationFinger.incorrect);
+				System.out.println(new Date() +" Average Number of correct key successor = "+(float)iterationKeySucc.correct/totalNumofNodes);
+				System.out.println(new Date() +" Average Number of calls to findPred = "+(float)iterationFindPred/totalNumofNodes);
+				System.out.println("-----------------------------------------------------------------------------------------------");
+				
+				/*System.out.println(new Date() +" Predecessor [Correct]= "+ iterationPredecessor.correct + "[Incorrect]= "+iterationPredecessor.incorrect);
+				System.out.println(new Date() +" Sucessor [Correct]= "+ iterationSuccesor.correct + "[Incorrect]= "+iterationSuccesor.incorrect);
+				System.out.println(new Date() +" Fingertable [Correct]= "+ iterationFinger.correct + "[Incorrect]= "+iterationFinger.incorrect);
+				System.out.println(new Date() +" Average Number of correct key sucessor = "+(float)iterationKeySucc.correct/totalNumofNodes);
+				System.out.println(new Date() +" Average Number of calls to findPred = "+(float)iterationFindPred/totalNumofNodes);
+				System.out.println("-----------------------------------------------------------------------------------------------");
+				*/
+				
+				
+				//System.out.println("Key Sucessor [Correct]= "+ iterationKeySucc.correct + "[Incorrect]= "+iterationKeySucc.incorrect);
 				//System.out.println("Average Number of correct key sucessor = "+iterationKeySucc.correct/(iterationKeySucc.correct + iterationKeySucc.incorrect));
-				System.out.println("Average Number of correct key sucessor = "+(float)iterationKeySucc.correct/totalNumofNodes);
-				System.out.println("Percentage of incorrect key sucessor = "+(float)iterationKeySucc.incorrect/totalNumofNodes*100+"%");
+				//System.out.println("Percentage of correct key sucessor = "+(float)iterationKeySucc.correct/totalNumofNodes*100+"%");
 			}
 		}catch(NumberFormatException e)
 		{
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.out.println("Usage: ./test <portNo> <interval> <no. of Nodes>");
 			System.out.println("Port Number,Interval,Number of Nodes must be integer..!");
 			System.exit(0);
 		}catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println("Usage: ./test <portNo> <interval> <no. of Nodes>");
 			System.out.println("Enter port number to run the server..!");
 			System.exit(0);
 		}
 		catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.out.println("Error while getting local Ip Address");
+			System.exit(0);
 		}catch (SystemException e) {
 			// TODO: handle exception
 		}catch (TException e)
 		{
-			e.printStackTrace();
+			//e.printStackTrace();
 			System.out.println("Error while calling remote server");
 			System.exit(0);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			System.out.println("Error while thread is sleeping");
+			System.exit(0);
 		} 
 	}
 
