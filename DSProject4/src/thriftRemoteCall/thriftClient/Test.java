@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Inet4Address;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +27,8 @@ import thriftRemoteCall.thriftUtil.DHTNode;
 import thriftRemoteCall.thriftUtil.NodeID;
 import thriftRemoteCall.thriftUtil.SystemException;
 
+
+
 public class Test implements Runnable {
 	public static int port;
 	public static int interval;
@@ -44,12 +48,18 @@ public class Test implements Runnable {
 		HashMap<Integer,Integer> pythonsucessor = new HashMap<Integer,Integer>();
 		HashMap<Integer,Integer> pythonpred = new HashMap<Integer,Integer>();
 
+		
 		List<NodeID> fingerFromRemote = null;
 		NodeID succFromRemote = null;
 		NodeID predFromRemote = null;
 		CompareValues fingervalues = null;
 		CompareValues succvalues = null;
 		CompareValues predvalues = null;
+		
+		//Bonus part
+		String mykey = null;
+		NodeID keySuccFromRemote = null;
+		CompareValues keysuccvalues = null;
 		try{
 			//parse all the input parameters
 			port = Integer.parseInt(args[0].trim());
@@ -93,7 +103,8 @@ public class Test implements Runnable {
 			//System.out.println("_------------>printing NODE ZERO: "+listofnodes);
 			//join the nodes
 			//sleep for a while to let the server start
-			Thread.sleep(15000);
+			System.out.println("Let all the server start before starting the join operation..!!");
+			Thread.sleep(1500);
 			for (int k = 0; k < listofnodes.size(); k++) 
 			{
 				if(listofnodes.get(k).getPort() != rootNode.getPort())
@@ -105,17 +116,31 @@ public class Test implements Runnable {
 					DHTNode.Client client2 = new DHTNode.Client(protocol);
 					client2.join(rootNode);
 					transport.close();
+					//Thread.sleep(100);
 				}
 			}
-
+			try {
+				Process p = Runtime.getRuntime().exec("./displayworker 9090");
+				Process p1 = Runtime.getRuntime().exec("./displayworker 9091");
+				Process p2 = Runtime.getRuntime().exec("./displayworker 9092");
+				Process p3 = Runtime.getRuntime().exec("./displayworker 9093");
+				Process p4 = Runtime.getRuntime().exec("./displayworker 9094");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			int maxtime = 500000;
 			while(maxtime > 0)
 			{
-				Thread.sleep(950);
+				Thread.sleep(50);
 				CompareValues iterationFinger = new CompareValues();
 				CompareValues iterationSuccesor = new CompareValues();
 				CompareValues iterationPredecessor = new CompareValues();
+				
+				CompareValues iterationKeySucc = new CompareValues();
+				
 				for (int j = 0; j < listofnodes.size(); j++) {
+					//Thread.sleep(800);
 					transport = new TSocket(listofnodes.get(j).getIp(), listofnodes.get(j).getPort());
 					transport.open();
 					protocol = new TBinaryProtocol(transport);
@@ -125,10 +150,23 @@ public class Test implements Runnable {
 					succFromRemote = client2.getNodeSucc();
 					//System.out.println("I am getting predecessor of TEST "+listofnodes.get(j).getPort());
 					predFromRemote = client2.getNodePred();
+					
+					//code for bonus /*
+					mykey = getSHAHash(listofnodes.get(j).getIp(), Integer.toString(listofnodes.get(j).getPort()));
+					keySuccFromRemote = client2.findSucc(mykey);
+					//code for bonus ends  */
+					
 					transport.close();
+					
 					fingervalues = compareFingerTable(pythonfingermap,fingerFromRemote,listofnodes.get(j).getPort());
 					succvalues = compareSuccessor(pythonsucessor,succFromRemote,listofnodes.get(j).getPort());
 					predvalues = comparePredecessor(pythonpred,predFromRemote,listofnodes.get(j).getPort());
+					
+					//code for bonus starts /*
+					keysuccvalues = compareKeySuccessor(listofnodes.get(j),keySuccFromRemote);
+					iterationKeySucc = myadd(iterationKeySucc, keysuccvalues);
+					//System.out.println("I am getting Succ of key of "+listofnodes.get(j).getPort()+" as "+keySuccFromRemote.getPort());
+					//code for bonus ends  */
 
 					iterationFinger = myadd(iterationFinger,fingervalues);
 					iterationSuccesor = myadd(iterationSuccesor,succvalues);
@@ -137,6 +175,10 @@ public class Test implements Runnable {
 				System.out.println("Fingertable [Correct]= "+ iterationFinger.correct + "[Incorrect]= "+iterationFinger.incorrect);
 				System.out.println("Sucessor [Correct]= "+ iterationSuccesor.correct + "[Incorrect]= "+iterationSuccesor.incorrect);
 				System.out.println("Predecessor [Correct]= "+ iterationPredecessor.correct + "[Incorrect]= "+iterationPredecessor.incorrect);
+				System.out.println("Key Sucessor [Correct]= "+ iterationKeySucc.correct + "[Incorrect]= "+iterationKeySucc.incorrect);
+				//System.out.println("Average Number of correct key sucessor = "+iterationKeySucc.correct/(iterationKeySucc.correct + iterationKeySucc.incorrect));
+				System.out.println("Average Number of correct key sucessor = "+(float)iterationKeySucc.correct/totalNumofNodes);
+				System.out.println("Percentage of incorrect key sucessor = "+(float)iterationKeySucc.incorrect/totalNumofNodes*100+"%");
 			}
 		}catch(NumberFormatException e)
 		{
@@ -162,6 +204,8 @@ public class Test implements Runnable {
 			e.printStackTrace();
 		} 
 	}
+
+	
 
 	private static CompareValues myadd(CompareValues finalcount,CompareValues currentvalue) {
 		// TODO Auto-generated method stub
@@ -207,7 +251,6 @@ public class Test implements Runnable {
 		}
 		return pythonsucessor;
 	}
-
 	private static CompareValues compareFingerTable(HashMap<Integer, List<Integer>> pythonfingermap,List<NodeID> fingerFromRemote,int port) 
 	{
 		// TODO Auto-generated method stub
@@ -226,7 +269,6 @@ public class Test implements Runnable {
 		}
 		return fingervalues;
 	}
-
 	private static CompareValues comparePredecessor(HashMap<Integer, Integer> pythonpred, NodeID predFromRemote, int port) {
 		// TODO Auto-generated method stub
 		CompareValues predvalues = new CompareValues();
@@ -257,6 +299,22 @@ public class Test implements Runnable {
 		}
 		return succvalues;
 	}
+	
+	//Method for bonus
+	private static CompareValues compareKeySuccessor(NodeID menode, NodeID keySuccFromRemote) {
+		// TODO Auto-generated method stub
+		CompareValues succvalues = new CompareValues();
+		if(menode.getPort() == keySuccFromRemote.getPort())
+		{
+			succvalues.correct++;
+		}
+		else
+		{
+			succvalues.incorrect++;
+		}
+		return succvalues;
+	}
+	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
@@ -276,7 +334,7 @@ public class Test implements Runnable {
 			Process p = Runtime.getRuntime().exec("./cmp_fingertables nodes.txt");
 			BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			// read the output from the command
-			System.out.println("Here is the standard output of the command:\n");
+			//System.out.println("Here is the standard output of the command:\n");
 			while ((readPythonOutput = stdInput.readLine()) != null) {
 				//System.out.println(readPythonOutput);
 				splitscreen = readPythonOutput.split(" ");
@@ -304,5 +362,29 @@ public class Test implements Runnable {
 			System.out.println("Error while running python code");
 		}
 		return pythonfingermap;
+	}
+
+	
+	
+	public static String getSHAHash(String ip,String port)
+	{
+		String tobehashed = null;
+		tobehashed = ip+":"+port;
+		StringBuffer sbuff = null;
+		sbuff = new StringBuffer();
+		SystemException excep = null;
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			md.update(tobehashed.getBytes());
+			byte[] digest = md.digest();
+			sbuff = new StringBuffer();
+			for (byte b : digest) {
+				sbuff.append(String.format("%02x", b & 0xff));
+			}
+		} catch (NoSuchAlgorithmException e) {
+			excep = new SystemException();
+			excep.setMessage("Error while generating SHA-256 Hash Code for new node.");	
+		}
+		return sbuff.toString();
 	}
 }
