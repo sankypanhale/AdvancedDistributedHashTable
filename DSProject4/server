@@ -1,6 +1,0 @@
-#!/bin/bash
-
-ant clean
-ant build
-
-ant FileServer -Darg0=$1 -Darg1=$2

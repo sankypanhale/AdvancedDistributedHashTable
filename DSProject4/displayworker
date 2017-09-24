@@ -1,4 +1,0 @@
-#!/bin/bash
-
-
-ant DisplayWorker -Darg0=$1 
