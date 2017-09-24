@@ -1,0 +1,7 @@
+#!/bin/bash
+
+ant clean
+ant build
+
+ant Test -Darg0=$1 -Darg1=$2 -Darg2=$3
+
