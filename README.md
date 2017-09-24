@@ -1,6 +1,8 @@
 ## Distributed Hash Table with Concurrent Join and Remove Nodes
 One of the biggest problem with the distributed system is to locate/lookup particular file on various nodes in distributed system. We try to solve this problem is quicker way by defining chord.
 
+This service provides functionality of concurrent join and remove of nodes from distributed systems. This uses **eventual consistency** model.
+
 ## What is chord?
 
 - It a peer to peer lookup system.
@@ -22,12 +24,16 @@ One of the biggest problem with the distributed system is to locate/lookup parti
 ## Implementation Details:
 
 Project includes total 4 packages and few supporting files and folders. Here are the details of each.
+
 Package: thriftRemoteCall.thriftClient
 implemented test code
+
 Package: thriftRemoteCall.thriftServer
 implemented client code			
+
 Package: thriftRemoteCall.thriftServiceHandler
 implemented service handler code	
+
 Package: thriftRemoteCall.thriftUtil
 auto generated files by thrift
 
@@ -37,11 +43,16 @@ data storage for server side
 Folder: src
 contains all packages in it
 
-Files:
-stable_chord.thrift, file provided by professor
+**Files:**
+
+stable_chord.thrift
+
 server, bash script to run the server; also cleans and builds the project
+
 test, bash script to run the client
+
 build.xml, the file defines attributes for ANT
+
 README.txt, the present text file
 
 ## Server:
@@ -49,10 +60,12 @@ chmod 755 server
 
 ./server 9090 1
 
-./server <portNo> <interval>
+./server port interval
 
 ## Test:
 chmod 755 test
 ./test 9090 1 3
-./test <portNo> <interval> <totalNoOfNodes>
+
+./test portNo interval totalNoOfNodes
+
 The test compares program's fingertable output with cmp_fingertable file
