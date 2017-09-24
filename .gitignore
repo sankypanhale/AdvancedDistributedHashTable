@@ -16,5 +16,6 @@ target/
 
 *.class
 .settings
-.lib/
+
+lib/
 
